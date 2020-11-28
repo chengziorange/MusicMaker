@@ -55,7 +55,7 @@ public class AudioMaker {
     }
 
     // 返回延迟处理后的音频文件名
-    public String delayOneClip(AudioClip clip) {
+    private String delayOneClip(AudioClip clip) {
         String outputFileName = clip.getTime() + "_" + clip.getName();
 
         String[] cmd = {
@@ -165,5 +165,38 @@ public class AudioMaker {
         }
 
         return resultFileName;
+    }
+
+    // 返回生成的文件名
+    private String cutAudio(String name, int startTime, int endTime) {
+        String output = "done_cutAudio.mp3";
+
+        String[] cmd = {
+                ffmpegPath,
+                "-i",
+                workingDir + name,
+                "-ss",
+                startTime + "ms",
+                "-t",
+                endTime + "ms",
+                "-acodec",
+                "copy",
+                output,
+                "-y"
+        };
+
+        try {
+            Process process = Runtime.getRuntime().exec(cmd);
+
+            // 阻塞当前线程，等待 ffmpeg 处理完毕
+            int status = process.waitFor();
+            if (status != 0) {
+                System.err.println("Failed to execute ffmpeg command to cut one audio. The return code is " + status);
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return output;
     }
 }

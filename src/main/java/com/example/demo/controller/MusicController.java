@@ -45,4 +45,9 @@ public class MusicController {
             e.printStackTrace();
         }
     }
+
+    @PostMapping("/music/cut")
+    public void cutMusic() {
+
+    }
 }
