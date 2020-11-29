@@ -7,23 +7,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 public class AudioMaker {
     // 测试时定义工作路径
-    private final String ffmpegPath = "/tmp/AudioMaker/ffmpeg";
-    private final String originAudioDir = "/tmp/AudioMaker/origin/";
-    private final String workingDir = "/tmp/AudioMaker/test/";
+    public static final String FFMPEG_PATH = "/opt/AudioMaker/ffmpeg";
+    public static final String ORIGIN_AUDIO_DIR = "/opt/AudioMaker/origin/";
+    private String workingDir;
+    private String id;
 
-    private static volatile AudioMaker instance;
-
-    public static AudioMaker getInstance() {
-        if (instance == null) {
-            instance = new AudioMaker();
-        }
-        return instance;
-    }
-
-    private AudioMaker() {
+    public AudioMaker() {
     }
 
     // 阻塞地处理，处理完后的文件名为 result.mp3
@@ -59,9 +52,9 @@ public class AudioMaker {
         String outputFileName = clip.getTime() + "_" + clip.getName();
 
         String[] cmd = {
-                ffmpegPath,
+                FFMPEG_PATH,
                 "-i",
-                originAudioDir + clip.getName(),
+                ORIGIN_AUDIO_DIR + clip.getName(),
                 "-filter_complex",
                 "adelay=delays=" + clip.getTime() + ":all=1",
                 workingDir + outputFileName,
@@ -98,7 +91,7 @@ public class AudioMaker {
     // 两个两个拼接的旧方法
     private void combineTwoClips(String clipName1, String clipName2) {
         String[] cmd = {
-                ffmpegPath,
+                FFMPEG_PATH,
                 "-i",
                 workingDir + clipName1,
                 "-i",
@@ -134,7 +127,7 @@ public class AudioMaker {
         String resultFileName = "result.mp3";
 
         List<String> cmdList = new ArrayList<>();
-        cmdList.add(ffmpegPath);
+        cmdList.add(FFMPEG_PATH);
         for (String name : clipNames) {
             cmdList.add("-i");
             cmdList.add(workingDir + name);
@@ -168,11 +161,11 @@ public class AudioMaker {
     }
 
     // 返回生成的文件名
-    private String cutAudio(String name, int startTime, int endTime) {
+    public String cutAudio(String name, int startTime, int endTime) {
         String output = "done_cutAudio.mp3";
 
         String[] cmd = {
-                ffmpegPath,
+                FFMPEG_PATH,
                 "-i",
                 workingDir + name,
                 "-ss",
@@ -198,5 +191,42 @@ public class AudioMaker {
         }
 
         return output;
+    }
+
+    public void setRandomWorkingDir() {
+        String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        Random random = new Random();
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < 10; i++) {
+            int number = random.nextInt(62);
+            sb.append(str.charAt(number));
+        }
+        id = sb.toString();
+        workingDir = "/tmp/AudioMaker/" + id + "/";
+        File file = new File(workingDir);
+        file.mkdir();
+    }
+
+    public String getWorkingDir() {
+        if (workingDir != null) {
+            return workingDir;
+        } else {
+            System.err.println("Working Dir hasn't set.");
+            return null;
+        }
+    }
+
+    public String getWorkingDir(String id) {
+        String result = "/tmp/AudioMaker/" + id + "/";
+        File file = new File(result);
+        if (file.exists()) {
+            return "/tmp/AudioMaker/" + id + "/";
+        } else {
+            return null;
+        }
+    }
+
+    public String getId() {
+        return id;
     }
 }

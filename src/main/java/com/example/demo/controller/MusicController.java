@@ -1,28 +1,27 @@
 package com.example.demo.controller;
 
 import com.example.demo.bean.AudioClip;
+import com.example.demo.bean.CutTime;
 import com.example.demo.util.AudioMaker;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import com.google.gson.Gson;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.io.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class MusicController {
 
     @PostMapping("/music/merge")
     public void mergeMusicClips(@RequestBody List<AudioClip> audioClips, HttpServletResponse response) {
-        AudioMaker audioMaker = AudioMaker.getInstance();
-        String result = "/tmp/AudioMaker/test/" + audioMaker.combineAudioClips(audioClips);
+        AudioMaker audioMaker = new AudioMaker();
+        audioMaker.setRandomWorkingDir();
+        String result = audioMaker.getWorkingDir() + audioMaker.combineAudioClips(audioClips);
 
         File mergedAudio = new File(result);
 
@@ -31,8 +30,6 @@ public class MusicController {
             byte[] data = new byte[(int) mergedAudio.length()];
             inputStream.read(data);
             inputStream.close();
-
-            String fileName = URLEncoder.encode("文件流形式视频.mp4", StandardCharsets.UTF_8);
 
             response.setContentType("audio/mpeg");
             response.addHeader("Content-Length", "" + data.length);
@@ -47,7 +44,59 @@ public class MusicController {
     }
 
     @PostMapping("/music/cut")
-    public void cutMusic() {
+    public void cutMusic(MultipartHttpServletRequest request, HttpServletResponse response) {
+        MultipartFile multipartFile = request.getFile("myfile");
+        AudioMaker audioMaker = new AudioMaker();
+        audioMaker.setRandomWorkingDir();
+        File audioToCut = new File(audioMaker.getWorkingDir());
+        try {
+            multipartFile.transferTo(audioToCut);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+        Gson gson = new Gson();
+        CutTime cutTime = new CutTime();
+        cutTime = gson.fromJson(request.getParameter("formData"), CutTime.class);
+        String result = audioMaker.cutAudio(audioToCut.getPath(), cutTime.getStartTime(), cutTime.getEndTime());
+
+        response.setContentType("application/json");
+        try {
+            PrintWriter writer = response.getWriter();
+            Map<String, String> map = new HashMap<>();
+            map.put("data", audioMaker.getId());
+            map.put("status", "200");
+            writer.write(map.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @GetMapping("/music/cut/{id}")
+    public void getCutAudio(@PathVariable(value = "id") String id, HttpServletResponse response) {
+        AudioMaker audioMaker = new AudioMaker();
+        String path = audioMaker.getWorkingDir(id) + "done_cutAudio.mp3";
+        if (audioMaker.getWorkingDir(id) != null) {
+            File cutAudio = new File(path);
+
+            try {
+                FileInputStream inputStream = new FileInputStream(cutAudio);
+                byte[] data = new byte[(int) cutAudio.length()];
+                inputStream.read(data);
+                inputStream.close();
+
+                response.setContentType("audio/mpeg");
+                response.addHeader("Content-Length", "" + data.length);
+
+                OutputStream outputStream = response.getOutputStream();
+                outputStream.write(data);
+                outputStream.flush();
+                outputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            response.setStatus(404);
+        }
     }
 }
