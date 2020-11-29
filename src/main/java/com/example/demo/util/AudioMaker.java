@@ -1,9 +1,13 @@
 package com.example.demo.util;
 
 import com.example.demo.bean.AudioClip;
+import org.springframework.util.FileCopyUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -151,7 +155,7 @@ public class AudioMaker {
             // 阻塞当前线程，等待 ffmpeg 处理完毕
             int status = process.waitFor();
             if (status != 0) {
-                System.err.println("Failed to execute ffmpeg command to combine two clips. The return code is " + status);
+                System.err.println("Failed to execute ffmpeg command to combine clips. The return code is " + status);
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
@@ -174,7 +178,7 @@ public class AudioMaker {
                 endTime + "ms",
                 "-acodec",
                 "copy",
-                output,
+                workingDir + output,
                 "-y"
         };
 
@@ -228,5 +232,17 @@ public class AudioMaker {
 
     public String getId() {
         return id;
+    }
+
+    public String convertFileToBinStr() {
+        File file = new File("/opt/AudioMaker/origin/Inception_chip3.mp3");
+
+        try {
+            InputStream fis = new FileInputStream(file);
+            byte[] bytes = FileCopyUtils.copyToByteArray(fis);
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            throw new RuntimeException("transform file into bin String 出错", ex);
+        }
     }
 }

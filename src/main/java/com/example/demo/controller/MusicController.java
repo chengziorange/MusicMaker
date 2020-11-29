@@ -7,7 +7,10 @@ import com.google.gson.Gson;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import org.springframework.web.multipart.support.StandardMultipartHttpServletRequest;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.HashMap;
@@ -28,7 +31,7 @@ public class MusicController {
             PrintWriter writer = response.getWriter();
             Map<String, String> map = new HashMap<>();
             map.put("data", audioMaker.getId());
-            map.put("status", "200");
+            map.put("statusCode", "200");
             writer.write(map.toString());
         } catch (IOException e) {
             e.printStackTrace();
@@ -84,28 +87,42 @@ public class MusicController {
     }
 
     @PostMapping("/music/cut")
-    public void cutMusic(MultipartHttpServletRequest request, HttpServletResponse response) {
-        MultipartFile multipartFile = request.getFile("myfile");
+    public void cutMusic(
+            @RequestParam(value = "myfile") MultipartFile[] files,
+            @RequestParam("formData") String cutTimeStr,
+            HttpServletResponse response) {
+
+        // MultipartHttpServletRequest params = (MultipartHttpServletRequest) request;
+
+        // MultipartFile multipartFile = params.getFile("name");
+        MultipartFile multipartFile = files[0];
         AudioMaker audioMaker = new AudioMaker();
         audioMaker.setRandomWorkingDir();
-        File audioToCut = new File(audioMaker.getWorkingDir());
-        try {
-            multipartFile.transferTo(audioToCut);
-        } catch (IOException e) {
-            e.printStackTrace();
+        File audioToCut = new File(audioMaker.getWorkingDir() + "todo_cutAudio.mp3");
+        BufferedOutputStream outputStream = null;
+        if (!multipartFile.isEmpty()) {
+            try {
+                byte[] bytes = multipartFile.getBytes();
+                outputStream = new BufferedOutputStream(new FileOutputStream(
+                        audioToCut));
+                outputStream.write(bytes);
+                outputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         Gson gson = new Gson();
         CutTime cutTime = new CutTime();
-        cutTime = gson.fromJson(request.getParameter("formData"), CutTime.class);
-        String result = audioMaker.cutAudio(audioToCut.getPath(), cutTime.getStartTime(), cutTime.getEndTime());
+        cutTime = gson.fromJson(cutTimeStr, CutTime.class);
+        String result = audioMaker.cutAudio("todo_cutAudio.mp3", cutTime.getStartTime(), cutTime.getEndTime());
 
         response.setContentType("application/json");
         try {
             PrintWriter writer = response.getWriter();
             Map<String, String> map = new HashMap<>();
             map.put("data", audioMaker.getId());
-            map.put("status", "200");
+            map.put("statusCode", "200");
             writer.write(map.toString());
         } catch (IOException e) {
             e.printStackTrace();
@@ -138,5 +155,13 @@ public class MusicController {
         } else {
             response.setStatus(404);
         }
+    }
+
+    @GetMapping("/music/test")
+    public String convert() {
+        AudioMaker audioMaker = new AudioMaker();
+        String str = audioMaker.convertFileToBinStr();
+        System.out.println(str);
+        return str;
     }
 }
