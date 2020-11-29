@@ -93,14 +93,14 @@ public class MusicController {
 
     @PostMapping("/music/cut")
     public void cutMusic(
-            HttpServletRequest request,
+            //HttpServletRequest request,
             @RequestParam(value = "myfile") MultipartFile[] files,
             @RequestParam("startTime") int startTime,
             @RequestParam("endTime") int endTime,
             HttpServletResponse response) {
 
         // LOG
-        System.out.println(request.toString());
+        // System.out.println(request.toString());
 
         // MultipartHttpServletRequest params = (MultipartHttpServletRequest) request;
 
