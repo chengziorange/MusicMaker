@@ -23,23 +23,63 @@ public class MusicController {
         audioMaker.setRandomWorkingDir();
         String result = audioMaker.getWorkingDir() + audioMaker.combineAudioClips(audioClips);
 
-        File mergedAudio = new File(result);
-
+        response.setContentType("application/json");
         try {
-            FileInputStream inputStream = new FileInputStream(mergedAudio);
-            byte[] data = new byte[(int) mergedAudio.length()];
-            inputStream.read(data);
-            inputStream.close();
-
-            response.setContentType("audio/mpeg");
-            response.addHeader("Content-Length", "" + data.length);
-
-            OutputStream outputStream = response.getOutputStream();
-            outputStream.write(data);
-            outputStream.flush();
-            outputStream.close();
+            PrintWriter writer = response.getWriter();
+            Map<String, String> map = new HashMap<>();
+            map.put("data", audioMaker.getId());
+            map.put("status", "200");
+            writer.write(map.toString());
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+//        File mergedAudio = new File(result);
+//
+//        try {
+//            FileInputStream inputStream = new FileInputStream(mergedAudio);
+//            byte[] data = new byte[(int) mergedAudio.length()];
+//            inputStream.read(data);
+//            inputStream.close();
+//
+//            response.setContentType("audio/mpeg");
+//            response.addHeader("Content-Length", "" + data.length);
+//
+//            OutputStream outputStream = response.getOutputStream();
+//            outputStream.write(data);
+//            outputStream.flush();
+//            outputStream.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+    }
+
+    @GetMapping("/music/merge/{id}")
+    public void getMergedMusic(@PathVariable(value = "id") String id, HttpServletResponse response) {
+        AudioMaker audioMaker = new AudioMaker();
+        String path = audioMaker.getWorkingDir(id) + "result.mp3";
+
+        if (audioMaker.getWorkingDir(id) != null) {
+            File mergedAudio = new File(path);
+
+            try {
+                FileInputStream inputStream = new FileInputStream(mergedAudio);
+                byte[] data = new byte[(int) mergedAudio.length()];
+                inputStream.read(data);
+                inputStream.close();
+
+                response.setContentType("audio/mpeg");
+                response.addHeader("Content-Length", "" + data.length);
+
+                OutputStream outputStream = response.getOutputStream();
+                outputStream.write(data);
+                outputStream.flush();
+                outputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            response.setStatus(404);
         }
     }
 
