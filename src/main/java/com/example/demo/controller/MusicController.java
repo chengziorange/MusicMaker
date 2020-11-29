@@ -22,6 +22,11 @@ public class MusicController {
 
     @PostMapping("/music/merge")
     public void mergeMusicClips(@RequestBody List<AudioClip> audioClips, HttpServletResponse response) {
+        if (audioClips == null || audioClips.isEmpty()) {
+            response.setStatus(404);
+            return;
+        }
+
         AudioMaker audioMaker = new AudioMaker();
         audioMaker.setRandomWorkingDir();
         String result = audioMaker.getWorkingDir() + audioMaker.combineAudioClips(audioClips);
@@ -88,9 +93,14 @@ public class MusicController {
 
     @PostMapping("/music/cut")
     public void cutMusic(
+            HttpServletRequest request,
             @RequestParam(value = "myfile") MultipartFile[] files,
-            @RequestParam("formData") String cutTimeStr,
+            @RequestParam("startTime") int startTime,
+            @RequestParam("endTime") int endTime,
             HttpServletResponse response) {
+
+        // LOG
+        System.out.println(request.toString());
 
         // MultipartHttpServletRequest params = (MultipartHttpServletRequest) request;
 
@@ -113,9 +123,10 @@ public class MusicController {
         }
 
         Gson gson = new Gson();
-        CutTime cutTime = new CutTime();
-        cutTime = gson.fromJson(cutTimeStr, CutTime.class);
-        String result = audioMaker.cutAudio("todo_cutAudio.mp3", cutTime.getStartTime(), cutTime.getEndTime());
+        // CutTime cutTime = new CutTime();
+        // cutTime = gson.fromJson(cutTimeStr, CutTime.class);
+        // String result = audioMaker.cutAudio("todo_cutAudio.mp3", cutTime.getStartTime(), cutTime.getEndTime());
+        String result = audioMaker.cutAudio("todo_cutAudio.mp3", startTime, endTime);
 
         response.setContentType("application/json");
         try {
