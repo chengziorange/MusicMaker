@@ -37,7 +37,8 @@ public class MusicController {
             Map<String, String> map = new HashMap<>();
             map.put("data", audioMaker.getId());
             map.put("statusCode", "200");
-            writer.write(map.toString());
+            Gson gson = new Gson();
+            writer.write(gson.toJson(map));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -122,7 +123,6 @@ public class MusicController {
             }
         }
 
-        Gson gson = new Gson();
         // CutTime cutTime = new CutTime();
         // cutTime = gson.fromJson(cutTimeStr, CutTime.class);
         // String result = audioMaker.cutAudio("todo_cutAudio.mp3", cutTime.getStartTime(), cutTime.getEndTime());
@@ -134,7 +134,8 @@ public class MusicController {
             Map<String, String> map = new HashMap<>();
             map.put("data", audioMaker.getId());
             map.put("statusCode", "200");
-            writer.write(map.toString());
+            Gson gson = new Gson();
+            writer.write(gson.toJson(map));
         } catch (IOException e) {
             e.printStackTrace();
         }
