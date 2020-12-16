@@ -31,7 +31,8 @@ public class AudioMaker {
             delayedClipsName.add(delayOneClip(clip));
         }
 
-        String result = combineClips(delayedClipsName.size(), delayedClipsName.toArray(new String[]{}));
+        String result = increaseVolumeOf(
+                combineClips(delayedClipsName.size(), delayedClipsName.toArray(new String[]{})), 3);
 
         // 两个两个拼接的旧方法
 //        if (delayedClipsName.size() >= 2) {
@@ -165,6 +166,42 @@ public class AudioMaker {
     }
 
     // 返回生成的文件名
+    private String increaseVolumeOf(String audioNames, int db) {
+        String resultFileName = "result.mp3";
+
+        String[] cmd = {
+                FFMPEG_PATH,
+                "-i",
+                workingDir + audioNames,
+                "-filter",
+                "volume=volume=" + db + "dB",
+                workingDir + "volume_up_audio.mp3",
+                "-y"
+        };
+
+        // 测试拼接后的字符串
+//        StringBuilder stringBuilder = new StringBuilder();
+//        for (String string : cmd
+//        ) {
+//            stringBuilder.append(string + " ");
+//        }
+//        String str = stringBuilder.toString();
+
+        try {
+            Process process = Runtime.getRuntime().exec(cmd);
+            // 阻塞当前线程，等待 ffmpeg 处理完毕
+            int status = process.waitFor();
+            if (status != 0) {
+                System.err.println("Failed to execute ffmpeg command to increase audio volume. The return code is " + status);
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        return resultFileName;
+    }
+
+    // 返回生成的文件名
     public String cutAudio(String name, int startTime, int endTime) {
         String output = "done_cutAudio.mp3";
 
@@ -201,7 +238,7 @@ public class AudioMaker {
         String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         Random random = new Random();
         StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 16; i++) {
             int number = random.nextInt(62);
             sb.append(str.charAt(number));
         }
